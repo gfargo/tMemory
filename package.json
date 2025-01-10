@@ -1,9 +1,29 @@
 {
   "name": "tconcentration",
   "version": "0.1.1",
-  "description": "A terminal-based Memory card game.",
+  "description": "A terminal-based Memory/Concentration card game built with React Ink. Features multiple grid sizes, AI opponent, and high scores.",
   "author": "gfargo <ghfargo@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gfargo/tconcentration.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gfargo/tconcentration/issues"
+  },
+  "homepage": "https://github.com/gfargo/tconcentration#readme",
+  "keywords": [
+    "game",
+    "card-game",
+    "memory",
+    "concentration",
+    "ink",
+    "ink-playing-cards",
+    "playing-cards",
+    "terminal-game",
+    "memory-game",
+    "card-matching"
+  ],
   "bin": "dist/cli.js",
   "type": "module",
   "engines": {
