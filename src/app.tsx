@@ -1,4 +1,4 @@
-import { Box, Text, useInput } from 'ink'
+import { Box, Text, useApp, useInput } from 'ink'
 import type { CardProps, TCardValue, TSuit } from 'ink-playing-cards'
 import {
   Card,
@@ -17,7 +17,8 @@ interface GameCard {
   selected?: boolean
 }
 
-const MemoryGame: React.FC = () => {
+const Game: React.FC = () => {
+  const { exit } = useApp()
   const { hand, deck } = useDeck()
   const [grid, setGrid] = useState<GameCard[]>([])
   const [flippedIndices, setFlippedIndices] = useState<number[]>([])
@@ -33,11 +34,8 @@ const MemoryGame: React.FC = () => {
   const [endTime, setEndTime] = useState<number>(0)
 
   const startNewGame = () => {
-    console.log('Starting new game...', { deckSize: deck.cards.length })
-
     // Calculate number of pairs based on grid size
     const numPairs = Math.floor((gridSize * gridSize) / 2)
-    // draw(numPairs, 'player')
     const cards = []
 
     for (let i = 0; i < numPairs * 2; i++) {
@@ -47,13 +45,6 @@ const MemoryGame: React.FC = () => {
 
     // Shuffle the drawn cards to randomize pair positions
     const shuffledCards = [...cards].sort(() => Math.random() - 0.5)
-
-    console.log('Game setup complete:', {
-      gameCards: shuffledCards,
-      deckSize: deck.cards.length,
-      gridSize,
-      // numPairs,
-    })
 
     setGrid(shuffledCards)
     setFlippedIndices([])
@@ -185,7 +176,7 @@ const MemoryGame: React.FC = () => {
       if (input === 'n') {
         setGameState('welcome')
       } else if (input === 'q') {
-        process.exit(0)
+        exit()
       }
       return
     }
@@ -205,45 +196,11 @@ const MemoryGame: React.FC = () => {
     }
   })
 
-  // useEffect(() => {
-  //   console.log('hand changed:', { hand })
-
-  //   if (hand.cards.length > 0) {
-  //     startNewGame()
-  //   }
-  // }, [hand.cards])
-
   useEffect(() => {
-    console.log('gamestate changed:', { gridSize, gameState })
-
     if (gameState === 'playing' && hand.cards.length === 0) {
-      // console.log('Drawing cards...')
-      // draw(4, 'player')
       startNewGame()
     }
   }, [gameState])
-
-  // useEffect(() => {
-  //   console.log('Game state changed:', {
-  //     gameState,
-  //     currentPlayer,
-  //     scores,
-  //     flippedIndices,
-  //     matchedIndices,
-  //     selectedIndex,
-  //     message,
-  //     hand,
-  //   })
-  // }, [
-  //   gameState,
-  //   currentPlayer,
-  //   scores,
-  //   flippedIndices,
-  //   matchedIndices,
-  //   selectedIndex,
-  //   message,
-  //   hand,
-  // ])
 
   if (gameState === 'welcome') {
     return (
@@ -305,7 +262,7 @@ const MemoryGame: React.FC = () => {
 
   return (
     <Box flexDirection="column">
-      <Text>Memory/Concentration Game</Text>
+      <Text>tConcentration</Text>
       <Text>Mode: {gameMode === 'single' ? 'Single Player' : 'vs AI'}</Text>
       <Text>
         Player Score: {scores.player} |{' '}
@@ -315,12 +272,12 @@ const MemoryGame: React.FC = () => {
       <Text>{message}</Text>
       <Box flexDirection="column" marginY={1}>
         {Array.from({ length: gridSize }, (_, row) => (
-          <Box key={row}>
+          <Box key={row} gap={1}>
             {Array.from({ length: gridSize }, (_, col) => {
               const index = row * gridSize + col
               const card = grid[index]
               return (
-                <Box key={col} marginRight={1} marginBottom={1}>
+                <Box key={col}>
                   {card && (
                     <Card
                       suit={card.suit}
@@ -330,6 +287,13 @@ const MemoryGame: React.FC = () => {
                         matchedIndices.includes(index)
                       }
                       selected={selectedIndex === index}
+                      variant={
+                        gridSize === 2
+                          ? 'simple'
+                          : gridSize === 4
+                          ? 'simple'
+                          : 'minimal'
+                      }
                     />
                   )}
                 </Box>
@@ -398,18 +362,9 @@ export default function App() {
   // Create paired deck with sequential pairs
   const pairedDeck = createPairedDeck()
 
-  console.log('Created paired deck:', {
-    totalCards: pairedDeck.length,
-    // Log a few pairs to verify sequential ordering
-    samplePairs: Array.from({ length: 3 }, (_, i) => {
-      const idx = i * 2
-      return [pairedDeck[idx]?.value, pairedDeck[idx + 1]?.value]
-    }),
-  })
-
   return (
     <DeckProvider initialCards={pairedDeck}>
-      <MemoryGame />
+      <Game />
     </DeckProvider>
   )
 }
