@@ -4,6 +4,7 @@ import {
   Card,
   createStandardDeck,
   DeckProvider,
+  MiniCard,
   useDeck,
 } from 'ink-playing-cards'
 import React, { useEffect, useState } from 'react'
@@ -29,7 +30,7 @@ const Game: React.FC = () => {
   const [gameMode, setGameMode] = useState<'single' | 'vs-ai'>('single')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [gameState, setGameState] = useState<GameState>('welcome')
-  const [gridSize, setGridSize] = useState<2 | 4 | 6 | 8>(4)
+  const [gridSize, setGridSize] = useState<2 | 4 | 6 | 8 | 10 | 12>(4)
   const [startTime, setStartTime] = useState<number>(0)
   const [endTime, setEndTime] = useState<number>(0)
 
@@ -163,9 +164,9 @@ const Game: React.FC = () => {
       if (key.leftArrow || key.rightArrow) {
         setGameMode((prev) => (prev === 'single' ? 'vs-ai' : 'single'))
       } else if (key.upArrow && gridSize > 2) {
-        setGridSize((prev) => (prev - 2) as 2 | 4 | 6 | 8)
-      } else if (key.downArrow && gridSize < 8) {
-        setGridSize((prev) => (prev + 2) as 2 | 4 | 6 | 8)
+        setGridSize((prev) => (prev - 2) as 2 | 4 | 6 | 8 | 10 | 12)
+      } else if (key.downArrow && gridSize < 12) {
+        setGridSize((prev) => (prev + 2) as 2 | 4 | 6 | 8 | 10 | 12)
       } else if (input === ' ' || input === 'enter') {
         setGameState('playing')
       }
@@ -279,22 +280,37 @@ const Game: React.FC = () => {
               return (
                 <Box key={col}>
                   {card && (
-                    <Card
-                      suit={card.suit}
-                      value={card.value}
-                      faceUp={
-                        flippedIndices.includes(index) ||
-                        matchedIndices.includes(index)
-                      }
-                      selected={selectedIndex === index}
-                      variant={
-                        gridSize === 2
-                          ? 'simple'
-                          : gridSize === 4
-                          ? 'simple'
-                          : 'minimal'
-                      }
-                    />
+                    <>
+                      {gridSize >= 8 ? (
+                        <MiniCard
+                          suit={card.suit}
+                          value={card.value}
+                          faceUp={
+                            flippedIndices.includes(index) ||
+                            matchedIndices.includes(index)
+                          }
+                          selected={selectedIndex === index}
+                          variant={gridSize >= 12 ? 'micro' : 'mini'}
+                        />
+                      ) : (
+                        <Card
+                          suit={card.suit}
+                          value={card.value}
+                          faceUp={
+                            flippedIndices.includes(index) ||
+                            matchedIndices.includes(index)
+                          }
+                          selected={selectedIndex === index}
+                          variant={
+                            gridSize === 2
+                              ? 'simple'
+                              : gridSize === 4
+                              ? 'simple'
+                              : 'minimal'
+                          }
+                        />
+                      )}
+                    </>
                   )}
                 </Box>
               )
@@ -316,7 +332,12 @@ const Game: React.FC = () => {
 
 function createPairedDeck() {
   // Create a standard deck
-  const standardDeck = createStandardDeck()
+  const standardDeck = [
+    ...createStandardDeck(),
+    ...createStandardDeck(),
+    ...createStandardDeck(),
+    ...createStandardDeck(),
+  ]
 
   // Group cards by their value
   const groupedByValue = standardDeck.reduce<Map<TCardValue, CardProps[]>>(
