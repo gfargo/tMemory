@@ -1,4 +1,6 @@
 import { Box, Text, useApp, useInput } from 'ink'
+import BigText from 'ink-big-text'
+import Gradient from 'ink-gradient'
 import type { CardProps, TCardValue, TSuit } from 'ink-playing-cards'
 import {
   Card,
@@ -24,7 +26,7 @@ const formatTime = (ms: number): string => {
 
 const getHighScores = (): Record<string, HighScore> => {
   try {
-    const scores = localStorage.getItem('tconcentration-high-scores')
+    const scores = localStorage.getItem('tmemory-high-scores')
     return scores ? JSON.parse(scores) : {}
   } catch {
     return {}
@@ -35,7 +37,7 @@ const saveHighScore = (key: string, score: HighScore) => {
   try {
     const scores = getHighScores()
     scores[key] = score
-    localStorage.setItem('tconcentration-high-scores', JSON.stringify(scores))
+    localStorage.setItem('tmemory-high-scores', JSON.stringify(scores))
   } catch {
     // Ignore storage errors
   }
@@ -269,11 +271,16 @@ const Game: React.FC = () => {
   if (gameState === 'welcome') {
     return (
       <Box flexDirection="column" alignItems="center" height={24} padding={1}>
-        <Text bold color="#00ff00">
-          Welcome to tConcentration!
-        </Text>
+        {/* <Gradient name="cristal">
+          <Text bold>
+            tMemory
+          </Text>
+        </Gradient> */}
+        <Gradient name="cristal">
+          <BigText text="tMemory" />
+        </Gradient>
 
-        <Box marginY={1}>
+        <Box marginY={1} marginTop={2}>
           <Text>Game Mode: </Text>
           <Text color={gameMode === 'single' ? '#00ff00' : '#666666'} bold>
             Single Player
@@ -453,39 +460,46 @@ const Game: React.FC = () => {
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" borderStyle="singleDouble" paddingX={1}>
       {/* Header */}
-      <Box justifyContent="space-between" marginBottom={1}>
-        <Text bold color="#00ff00">
-          tConcentration
-        </Text>
+      <Box justifyContent="space-between">
+        <Gradient name="cristal">
+          <Text>tMemory</Text>
+        </Gradient>
         <Text color="#87ceeb">
-          {gameMode === 'single' ? 'Single Player' : 'vs AI'}
+          [{gameMode === 'single' ? 'Single Player' : 'vs AI'}]
         </Text>
       </Box>
 
       {/* Score and Timer */}
       <Box justifyContent="space-between" marginBottom={1}>
+        <LiveTimer startTime={startTime} />
         <Box>
-          <Text color="#00ff00">
-            Player: <Text bold>{scores.player}</Text>
+          <Text dimColor>Scores{` `}</Text>
+          <Text>
+            P1{' '}
+            <Text color="#00ff00" bold>
+              {scores?.player || 0}
+            </Text>
           </Text>
           {gameMode === 'vs-ai' && (
             <Text>
               {' '}
               |{' '}
-              <Text color="#ff6b6b">
-                AI: <Text bold>{scores.ai}</Text>
+              <Text>
+                AI{' '}
+                <Text bold color="#ff6b6b">
+                  {scores?.ai || 0}
+                </Text>
               </Text>
             </Text>
           )}
         </Box>
-        <LiveTimer startTime={startTime} />
       </Box>
 
       {/* Game Message */}
       {message && (
-        <Box marginBottom={1}>
+        <Box marginBottom={1} justifyContent="center">
           <Text color="#ffa500">{message}</Text>
         </Box>
       )}

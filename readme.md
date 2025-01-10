@@ -1,8 +1,8 @@
-# tConcentration 🃏
+# tMemory 🃏
 
 A beautiful terminal-based Memory/Concentration card game built with React Ink.
 
-<!-- ![tConcentration Demo](demo.gif) -->
+<!-- ![tmemory Demo](demo.gif) -->
 
 ## Features
 
@@ -24,22 +24,22 @@ A beautiful terminal-based Memory/Concentration card game built with React Ink.
 
 ## Installation
 
-You can play tConcentration without installing it by using `npx`:
+You can play tMemory without installing it by using `npx`:
 
 ```bash
-npx tconcentration
+npx tmemory
 ```
 
 Or install it globally:
 
 ```bash
-npm install -g tconcentration
+npm install -g tmemory
 ```
 
 Then run:
 
 ```bash
-tconcentration
+tmemory
 ```
 
 ## How to Play

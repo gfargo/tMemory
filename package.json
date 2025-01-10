@@ -1,17 +1,17 @@
 {
-  "name": "tconcentration",
+  "name": "tmemory",
   "version": "0.1.1",
-  "description": "A terminal-based Memory/Concentration card game built with React Ink. Features multiple grid sizes, AI opponent, and high scores.",
+  "description": "A terminal-based Memory card game built with React Ink. Features multiple grid sizes, AI opponent, and high scores.",
   "author": "gfargo <ghfargo@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gfargo/tconcentration.git"
+    "url": "git+https://github.com/gfargo/tmemory.git"
   },
   "bugs": {
-    "url": "https://github.com/gfargo/tconcentration/issues"
+    "url": "https://github.com/gfargo/tmemory/issues"
   },
-  "homepage": "https://github.com/gfargo/tconcentration#readme",
+  "homepage": "https://github.com/gfargo/tmemory#readme",
   "keywords": [
     "game",
     "card-game",
@@ -46,6 +46,8 @@
   ],
   "dependencies": {
     "ink": "^5.1.0",
+    "ink-big-text": "^2.0.0",
+    "ink-gradient": "^3.0.0",
     "ink-playing-cards": "^0.7.3",
     "meow": "^11.0.0",
     "react": "^18.2.0"
