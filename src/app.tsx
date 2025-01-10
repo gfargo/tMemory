@@ -9,6 +9,68 @@ import {
 } from 'ink-playing-cards'
 import React, { useEffect, useState } from 'react'
 
+interface HighScore {
+  time: number
+  gridSize: number
+  gameMode: 'single' | 'vs-ai'
+  date: string
+}
+
+const formatTime = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`
+}
+
+const getHighScores = (): Record<string, HighScore> => {
+  try {
+    const scores = localStorage.getItem('tconcentration-high-scores')
+    return scores ? JSON.parse(scores) : {}
+  } catch {
+    return {}
+  }
+}
+
+const saveHighScore = (key: string, score: HighScore) => {
+  try {
+    const scores = getHighScores()
+    scores[key] = score
+    localStorage.setItem('tconcentration-high-scores', JSON.stringify(scores))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+const getHighScoreKey = (
+  gridSize: number,
+  gameMode: 'single' | 'vs-ai'
+): string => {
+  return `${gridSize}x${gridSize}-${gameMode}`
+}
+
+const isNewHighScore = (
+  time: number,
+  gridSize: number,
+  gameMode: 'single' | 'vs-ai'
+): boolean => {
+  const scores = getHighScores()
+  const key = getHighScoreKey(gridSize, gameMode)
+  return !scores[key] || time < scores[key].time
+}
+
+const LiveTimer: React.FC<{ startTime: number }> = ({ startTime }) => {
+  const [currentTime, setCurrentTime] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return <Text color="#87ceeb">⏱️ {formatTime(currentTime - startTime)}</Text>
+}
+
 type GameState = 'welcome' | 'playing' | 'gameover'
 
 interface GameCard {
@@ -18,6 +80,11 @@ interface GameCard {
   selected?: boolean
 }
 
+interface GameScores {
+  player: number
+  ai: number
+}
+
 const Game: React.FC = () => {
   const { exit } = useApp()
   const { hand, deck } = useDeck()
@@ -25,7 +92,7 @@ const Game: React.FC = () => {
   const [flippedIndices, setFlippedIndices] = useState<number[]>([])
   const [matchedIndices, setMatchedIndices] = useState<number[]>([])
   const [currentPlayer, setCurrentPlayer] = useState<'player' | 'ai'>('player')
-  const [scores, setScores] = useState({ player: 0, ai: 0 })
+  const [scores, setScores] = useState<GameScores>({ player: 0, ai: 0 })
   const [message, setMessage] = useState('')
   const [gameMode, setGameMode] = useState<'single' | 'vs-ai'>('single')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -153,11 +220,7 @@ const Game: React.FC = () => {
     setTimeout(() => flipCard(secondIndex), 1000)
   }
 
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000)
-    const minutes = Math.floor(seconds / 60)
-    return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`
-  }
+  // formatTime is now a shared utility function
 
   useInput((input, key) => {
     if (gameState === 'welcome') {
@@ -205,27 +268,75 @@ const Game: React.FC = () => {
 
   if (gameState === 'welcome') {
     return (
-      <Box flexDirection="column" alignItems="center" padding={1}>
-        <Text bold>Welcome to Memory/Concentration Game!</Text>
+      <Box flexDirection="column" alignItems="center" height={24} padding={1}>
+        <Text bold color="#00ff00">
+          Welcome to tConcentration!
+        </Text>
+
         <Box marginY={1}>
           <Text>Game Mode: </Text>
-          <Text color={gameMode === 'single' ? 'green' : 'white'}>
+          <Text color={gameMode === 'single' ? '#00ff00' : '#666666'} bold>
             Single Player
           </Text>
           <Text> / </Text>
-          <Text color={gameMode === 'vs-ai' ? 'green' : 'white'}>vs AI</Text>
-        </Box>
-        <Box marginY={1}>
-          <Text>
-            Grid Size: {gridSize}x{gridSize} (
-            {Math.floor((gridSize * gridSize) / 2)} pairs)
+          <Text color={gameMode === 'vs-ai' ? '#00ff00' : '#666666'} bold>
+            vs AI
           </Text>
         </Box>
+
+        <Box marginY={1}>
+          <Text color="#87ceeb">
+            Grid Size:{' '}
+            <Text bold>
+              {gridSize}x{gridSize}
+            </Text>{' '}
+            ({Math.floor((gridSize * gridSize) / 2)} pairs)
+          </Text>
+        </Box>
+
+        {/* High Score Display */}
+        <Box marginY={1} flexDirection="column" alignItems="center">
+          {(() => {
+            const scores = getHighScores()
+            const currentHighScore = scores[getHighScoreKey(gridSize, gameMode)]
+            return currentHighScore ? (
+              <>
+                <Text color="#ffd700" bold>
+                  Best Time:
+                </Text>
+                <Text color="#ffd700">{formatTime(currentHighScore.time)}</Text>
+              </>
+            ) : (
+              <Text color="#666666" dimColor>
+                No records yet!
+              </Text>
+            )
+          })()}
+        </Box>
+
         <Box flexDirection="column" marginY={1}>
-          <Text>Controls:</Text>
-          <Text>- Left/Right arrows to change game mode</Text>
-          <Text>- Up/Down arrows to adjust grid size</Text>
-          <Text>- Space or Enter to start game</Text>
+          <Text bold color="#ffa500">
+            Controls:
+          </Text>
+          <Text>
+            <Text bold>←/→</Text> <Text dimColor>Change game mode</Text>
+          </Text>
+          <Text>
+            <Text bold>↑/↓</Text> <Text dimColor>Adjust grid size</Text>
+          </Text>
+          <Text>
+            <Text bold>Space</Text> <Text dimColor>Start game</Text>
+          </Text>
+        </Box>
+
+        <Box marginTop={1}>
+          <Text color="#666666">
+            Press{' '}
+            <Text color="#00ff00" bold>
+              Space
+            </Text>{' '}
+            to begin!
+          </Text>
         </Box>
       </Box>
     )
@@ -240,22 +351,102 @@ const Game: React.FC = () => {
         ? 'AI'
         : 'Nobody'
 
+    // Only track high scores for player wins in single player mode
+    // or when player beats AI in vs-ai mode
+    const shouldTrackScore =
+      (gameMode === 'single' && winner === 'Player') ||
+      (gameMode === 'vs-ai' && winner === 'Player')
+
+    const isNewRecord =
+      shouldTrackScore && isNewHighScore(timeElapsed, gridSize, gameMode)
+
+    // Save high score if it's a new record
+    if (isNewRecord) {
+      const key = getHighScoreKey(gridSize, gameMode)
+      saveHighScore(key, {
+        time: timeElapsed,
+        gridSize,
+        gameMode,
+        date: new Date().toISOString(),
+      })
+    }
+
+    // Get current high score for this configuration
+    const highScores = getHighScores()
+    const currentHighScore = highScores[getHighScoreKey(gridSize, gameMode)]
+
     return (
-      <Box flexDirection="column" alignItems="center" padding={1}>
-        <Text bold>Game Over!</Text>
+      <Box flexDirection="column" alignItems="center" height={24} padding={1}>
+        <Text bold color="#ffa500">
+          Game Over!
+        </Text>
+
         <Box marginY={1}>
-          <Text>{winner} wins!</Text>
+          <Text
+            bold
+            color={
+              winner === 'Player'
+                ? '#00ff00'
+                : winner === 'AI'
+                ? '#ff6b6b'
+                : '#ffa500'
+            }
+          >
+            {winner === 'Player'
+              ? 'You Win!'
+              : winner === 'AI'
+              ? 'AI Wins!'
+              : "It's a Tie!"}
+          </Text>
         </Box>
-        <Box marginY={1}>
-          <Text>Time: {formatTime(timeElapsed)}</Text>
+
+        <Box marginY={1} flexDirection="column" alignItems="center">
+          <Text color="#87ceeb">
+            Time: <Text bold>{formatTime(timeElapsed)}</Text>
+          </Text>
+          {shouldTrackScore &&
+            (isNewRecord ? (
+              <Text color="#ffd700" bold>
+                ★ New Record! ★
+              </Text>
+            ) : (
+              currentHighScore && (
+                <Text color="#666666">
+                  Best: <Text bold>{formatTime(currentHighScore.time)}</Text>
+                </Text>
+              )
+            ))}
         </Box>
-        <Box marginY={1}>
-          <Text>Scores - Player: {scores.player}</Text>
-          {gameMode === 'vs-ai' && <Text> | AI: {scores.ai}</Text>}
+
+        <Box marginY={1} flexDirection="column" alignItems="center">
+          <Text>Final Score:</Text>
+          <Box gap={2}>
+            <Text color="#00ff00">
+              Player: <Text bold>{String(scores.player)}</Text>
+            </Text>
+            {gameMode === 'vs-ai' && (
+              <Text color="#ff6b6b">
+                AI: <Text bold>{String(scores.ai)}</Text>
+              </Text>
+            )}
+          </Box>
         </Box>
-        <Box flexDirection="column" marginY={1}>
-          <Text>Press 'n' for new game</Text>
-          <Text>Press 'q' to quit</Text>
+
+        <Box flexDirection="column" alignItems="center" marginY={1}>
+          <Text color="#666666">
+            Press{' '}
+            <Text color="#00ff00" bold>
+              N
+            </Text>{' '}
+            for new game
+          </Text>
+          <Text color="#666666">
+            Press{' '}
+            <Text color="#ff0000" bold dimColor>
+              Q
+            </Text>{' '}
+            to quit
+          </Text>
         </Box>
       </Box>
     )
@@ -263,15 +454,49 @@ const Game: React.FC = () => {
 
   return (
     <Box flexDirection="column">
-      <Text>tConcentration</Text>
-      <Text>Mode: {gameMode === 'single' ? 'Single Player' : 'vs AI'}</Text>
-      <Text>
-        Player Score: {scores.player} |{' '}
-        {gameMode === 'vs-ai' ? `AI Score: ${scores.ai}` : ''}
-      </Text>
-      <Text>Time: {formatTime(Date.now() - startTime)}</Text>
-      <Text>{message}</Text>
-      <Box flexDirection="column" marginY={1}>
+      {/* Header */}
+      <Box justifyContent="space-between" marginBottom={1}>
+        <Text bold color="#00ff00">
+          tConcentration
+        </Text>
+        <Text color="#87ceeb">
+          {gameMode === 'single' ? 'Single Player' : 'vs AI'}
+        </Text>
+      </Box>
+
+      {/* Score and Timer */}
+      <Box justifyContent="space-between" marginBottom={1}>
+        <Box>
+          <Text color="#00ff00">
+            Player: <Text bold>{scores.player}</Text>
+          </Text>
+          {gameMode === 'vs-ai' && (
+            <Text>
+              {' '}
+              |{' '}
+              <Text color="#ff6b6b">
+                AI: <Text bold>{scores.ai}</Text>
+              </Text>
+            </Text>
+          )}
+        </Box>
+        <LiveTimer startTime={startTime} />
+      </Box>
+
+      {/* Game Message */}
+      {message && (
+        <Box marginBottom={1}>
+          <Text color="#ffa500">{message}</Text>
+        </Box>
+      )}
+
+      {/* Game Grid - Centered */}
+      <Box
+        flexDirection="column"
+        alignItems="center"
+        flexGrow={1}
+        // justifyContent="center"
+      >
         {Array.from({ length: gridSize }, (_, row) => (
           <Box key={row} gap={1}>
             {Array.from({ length: gridSize }, (_, col) => {
@@ -318,14 +543,29 @@ const Game: React.FC = () => {
           </Box>
         ))}
       </Box>
-      <Text>Current Player: {currentPlayer === 'player' ? 'You' : 'AI'}</Text>
-      {currentPlayer === 'player' && (
-        <Box flexDirection="column">
-          <Text>Controls:</Text>
-          <Text>- Arrow keys to move</Text>
-          <Text>- Space to flip a card</Text>
+
+      {/* Footer */}
+      <Box flexDirection="column" marginTop={1}>
+        <Box justifyContent="space-between" marginBottom={1}>
+          <Text color="#87ceeb">
+            Current Player:{' '}
+            <Text bold>{currentPlayer === 'player' ? 'You' : 'AI'}</Text>
+          </Text>
         </Box>
-      )}
+        {currentPlayer === 'player' && (
+          <Box flexDirection="column">
+            <Text bold color="#ffa500">
+              Controls:
+            </Text>
+            <Text>
+              ←/→/↑/↓ <Text dimColor>Move</Text>
+            </Text>
+            <Text>
+              Space <Text dimColor>Flip card</Text>
+            </Text>
+          </Box>
+        )}
+      </Box>
     </Box>
   )
 }
