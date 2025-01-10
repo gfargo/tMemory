@@ -2644,10 +2644,10 @@ ini@^1.3.4, ini@~1.3.0:
   resolved "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
-ink-playing-cards@^0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/ink-playing-cards/-/ink-playing-cards-0.7.1.tgz#d02336c45ba73c7d42e406fe2f6de136715092cd"
-  integrity sha512-FsvoPFWjxN2QkbpNhOe+BqQ2mdIbPacwYKXxh7X/O43jy1H2MDQNvXAPa1e2G5ugV78uGCTior8aNinklrF+kQ==
+ink-playing-cards@^0.7.2:
+  version "0.7.2"
+  resolved "https://registry.yarnpkg.com/ink-playing-cards/-/ink-playing-cards-0.7.2.tgz#8bb0ce77de930ec41ce27d3d34e1432e201590f4"
+  integrity sha512-tq+ZuK5vNBo4BZ9f0LASIJilrQjgLG/J/XfV/iwjeK8y+ol8WEOzM+oUXYEtUCFSOoWJhSpMKwQ0G9dGqWZKFQ==
   dependencies:
     ink "^4.1.0"
     meow "^11.0.0"

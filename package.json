@@ -26,7 +26,7 @@
   ],
   "dependencies": {
     "ink": "^5.1.0",
-    "ink-playing-cards": "^0.7.1",
+    "ink-playing-cards": "^0.7.2",
     "meow": "^11.0.0",
     "react": "^18.2.0"
   },
