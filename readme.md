@@ -9,13 +9,11 @@ A terminal-based Memory/Concentration card game built with React Ink.
 - 🎮 Multiple game modes:
   - Single player
   - Player vs AI (🚧 in development)
-- 📏 Adjustable grid sizes:
-  - 2x2 (2 pairs)
-  - 4x4 (8 pairs)
-  - 6x6 (18 pairs)
-  - 8x8 (32 pairs)
-  - 10x10 (50 pairs)
-  - 12x12 (72 pairs)
+- 📏 Flexible grid sizes:
+  - Preset grids from 2x2 to 12x12
+  - Custom grid dimensions up to 12x12
+  - Rectangular grids (e.g., 2x4, 3x6)
+  - Design your own grid layout!
 - ⏱️ Time tracking
 - 🎯 Score tracking
 - 🤖 Smart AI opponent
@@ -45,8 +43,13 @@ tmemory
 ## How to Play
 
 1. **Start Screen**:
-   - Use ⬅️/➡️ arrows to select game mode (Single Player/vs AI)
-   - Use ⬆️/⬇️ arrows to adjust grid size
+   - Press 'G' to switch game mode (Single Player/vs AI)
+   - Press 'M' to switch between preset and custom grid modes
+   - In preset mode:
+     - Use ⬆️/⬇️ arrows to cycle through predefined grid sizes
+   - In custom mode:
+     - Use ⬅️/➡️ arrows to adjust number of columns
+     - Use ⬆️/⬇️ arrows to adjust number of rows
    - Press Space or Enter to start game
 
 2. **During Game**:
