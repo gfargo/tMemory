@@ -1,3 +1,4 @@
+import Conf from 'conf'
 import { Box, Text, useApp, useInput } from 'ink'
 import BigText from 'ink-big-text'
 import Gradient from 'ink-gradient'
@@ -18,6 +19,27 @@ interface HighScore {
   date: string
 }
 
+// Initialize Conf with schema validation
+const config = new Conf({
+  projectName: 'tmemory',
+  schema: {
+    scores: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          time: { type: 'number' },
+          gridSize: { type: 'number' },
+          gameMode: { type: 'string', enum: ['single', 'vs-ai'] },
+          date: { type: 'string' }
+        },
+        required: ['time', 'gridSize', 'gameMode', 'date']
+      },
+      default: {}
+    }
+  }
+})
+
 const formatTime = (ms: number): string => {
   const seconds = Math.floor(ms / 1000)
   const minutes = Math.floor(seconds / 60)
@@ -25,22 +47,13 @@ const formatTime = (ms: number): string => {
 }
 
 const getHighScores = (): Record<string, HighScore> => {
-  try {
-    const scores = localStorage.getItem('tmemory-high-scores')
-    return scores ? JSON.parse(scores) : {}
-  } catch {
-    return {}
-  }
+  return config.get('scores') as Record<string, HighScore>
 }
 
 const saveHighScore = (key: string, score: HighScore) => {
-  try {
-    const scores = getHighScores()
-    scores[key] = score
-    localStorage.setItem('tmemory-high-scores', JSON.stringify(scores))
-  } catch {
-    // Ignore storage errors
-  }
+  const scores = getHighScores()
+  scores[key] = score
+  config.set('scores', scores)
 }
 
 const getHighScoreKey = (
@@ -270,15 +283,17 @@ const Game: React.FC = () => {
 
   if (gameState === 'welcome') {
     return (
-      <Box flexDirection="column" alignItems="center" height={24} padding={1}>
+      <Box flexDirection="column" alignItems="center"   padding={1}>
         {/* <Gradient name="cristal">
           <Text bold>
             tMemory
           </Text>
         </Gradient> */}
-        <Gradient name="cristal">
-          <BigText text="tMemory" />
-        </Gradient>
+        <Box >
+            <Gradient name="cristal">
+              <BigText text="Memory" />
+            </Gradient>
+        </Box>
 
         <Box marginY={1} marginTop={2}>
           <Text>Game Mode: </Text>
@@ -383,10 +398,15 @@ const Game: React.FC = () => {
     const currentHighScore = highScores[getHighScoreKey(gridSize, gameMode)]
 
     return (
-      <Box flexDirection="column" alignItems="center" height={24} padding={1}>
-        <Text bold color="#ffa500">
-          Game Over!
-        </Text>
+      <Box flexDirection="column" alignItems="center" padding={1}>
+        <Box flexDirection="column" alignItems="center" height={12}>
+          <Gradient name="cristal">
+            <BigText text="Game" />
+          </Gradient>
+          <Gradient name="cristal">
+            <BigText text="Over" />
+          </Gradient>
+        </Box>
 
         <Box marginY={1}>
           <Text
@@ -429,7 +449,7 @@ const Game: React.FC = () => {
           <Text>Final Score:</Text>
           <Box gap={2}>
             <Text color="#00ff00">
-              Player: <Text bold>{String(scores.player)}</Text>
+              P1 <Text bold>{String(scores.player)}</Text>
             </Text>
             {gameMode === 'vs-ai' && (
               <Text color="#ff6b6b">

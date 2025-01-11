@@ -30,21 +30,22 @@
     "node": ">=16"
   },
   "scripts": {
-    "prestart": "yarn build",
+    "prestart": "npm run build",
     "start": "node dist/cli.js",
     "build": "tsc",
     "dev": "tsc --watch",
     "release": "release-it",
     "lint": "prettier --check . && xo",
     "lint:fix": "prettier --write . && xo --fix",
-    "pretest": "yarn build",
+    "pretest": "npm run build",
     "test": "ava",
-    "test:fix": "yarn lint:fix && ava --update-snapshots"
+    "test:fix": "npm run lint:fix && ava --update-snapshots"
   },
   "files": [
     "dist"
   ],
   "dependencies": {
+    "conf": "^13.1.0",
     "ink": "^5.1.0",
     "ink-big-text": "^2.0.0",
     "ink-gradient": "^3.0.0",

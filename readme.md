@@ -1,6 +1,6 @@
 # tMemory 🃏
 
-A beautiful terminal-based Memory/Concentration card game built with React Ink.
+A terminal-based Memory/Concentration card game built with React Ink.
 
 <!-- ![tmemory Demo](demo.gif) -->
 
