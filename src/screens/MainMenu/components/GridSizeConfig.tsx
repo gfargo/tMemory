@@ -1,8 +1,9 @@
 import { Box, Text } from 'ink'
+import Gradient from 'ink-gradient'
 import React from 'react'
-import { GridPreview } from "../../../components/common/GridPreview/index.js"
-import { COLORS } from "../../../constants/colors.js"
-import { GridDimension } from "../../../types/game.js"
+import { GridPreview } from '../../../components/common/GridPreview/index.js'
+import { COLORS } from '../../../constants/colors.js'
+import { GridDimension } from '../../../types/game.js'
 
 interface GridSizeConfigProps {
   gridDimension: GridDimension
@@ -16,13 +17,15 @@ export const GridSizeConfig: React.FC<GridSizeConfigProps> = ({
   return (
     <Box marginY={1} flexDirection="column" alignItems="center">
       <Box>
-        <Text color={COLORS.info}>
-          Grid Size [{selectionMode}]:{' '}
-          <Text bold>
-            {gridDimension.rows}x{gridDimension.cols}
-          </Text>{' '}
-          ({Math.floor((gridDimension.rows * gridDimension.cols) / 2)} pairs)
-        </Text>
+        <Gradient name="cristal">
+          <Text>
+            Grid Size [{selectionMode}]:{' '}
+            <Text bold>
+              {gridDimension.rows}x{gridDimension.cols}
+            </Text>{' '}
+            ({Math.floor((gridDimension.rows * gridDimension.cols) / 2)} pairs)
+          </Text>
+        </Gradient>
       </Box>
 
       {selectionMode === 'custom' && (

@@ -1,6 +1,6 @@
 # tMemory 🃏
 
-A terminal-based Memory/Concentration card game built with React Ink.
+A terminal-based Memory/Concentration card game built with React, [Ink](https://github.com/vadimdemedes/ink), and [Ink Playing Cards](https://github.com/gfargo/ink-playing-cards/)
 
 <!-- ![tmemory Demo](demo.gif) -->
 
@@ -11,15 +11,12 @@ A terminal-based Memory/Concentration card game built with React Ink.
   - Player vs Player (2P)
   - Player vs AI
 - 📏 Flexible grid sizes:
-  - Preset grids from 2x2 to 12x12
-  - Custom grid dimensions up to 12x12
-  - Rectangular grids (e.g., 2x4, 3x6)
+  - Preset grids (2x2 to 12x12)
+  - Custom grids up to 12x12
   - Design your own grid layout!
-- ⏱️ Time tracking
-- 🎯 Score tracking
-- 🤖 Smart AI opponent
-- 🎨 Beautiful card rendering with multiple variants
-- ⌨️ Intuitive keyboard controls
+- ⏱️ Speed Runs with Time tracking
+- 🎯 Persistent High Score tracking
+- 🤖 AI opponent
 
 ## Installation
 

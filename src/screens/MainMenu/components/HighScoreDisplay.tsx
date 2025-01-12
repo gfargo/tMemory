@@ -18,7 +18,7 @@ export const HighScoreDisplay: React.FC<HighScoreDisplayProps> = ({
   const currentHighScore = getHighScore(gameMode, gridDimension)
 
   return (
-    <Box marginY={1} flexDirection="column" alignItems="center" minWidth={48}>
+    <Box flexDirection="column" alignItems="center">
       {currentHighScore ? (
         <Box alignItems="center" minWidth={48} justifyContent="center">
           <Text color={COLORS.gold} bold>

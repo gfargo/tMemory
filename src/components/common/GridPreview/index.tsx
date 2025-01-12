@@ -1,8 +1,8 @@
 import { Box, Text } from 'ink'
+import Gradient from 'ink-gradient'
 import React from 'react'
-import { COLORS } from "../../../constants/colors.js"
-import { GridDimension } from "../../../types/game.js"
-import { renderGridPreview } from "../../../utils/grid.js"
+import { GridDimension } from '../../../types/game.js'
+import { renderGridPreview } from '../../../utils/grid.js'
 
 interface GridPreviewProps {
   dimension: GridDimension
@@ -16,9 +16,9 @@ export const GridPreview: React.FC<GridPreviewProps> = ({
   return (
     <Box flexDirection="column" alignItems="center">
       {renderGridPreview(dimension).map((line, i) => (
-        <Text key={i} color={line.includes('?') ? COLORS.info : COLORS.dim}>
-          {line}
-        </Text>
+        <Gradient key={i} name="mind">
+          <Text>{line}</Text>
+        </Gradient>
       ))}
       {showStats && (
         <Text dimColor>

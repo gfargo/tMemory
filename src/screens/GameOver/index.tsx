@@ -59,10 +59,10 @@ export const GameOver: React.FC = () => {
     <GameLayout>
       <Box flexDirection="column" alignItems="center" padding={1}>
         <Box flexDirection="column" alignItems="center" height={12}>
-          <Gradient name="cristal">
+          <Gradient name="mind">
             <BigText text="Game" />
           </Gradient>
-          <Gradient name="cristal">
+          <Gradient name="mind">
             <BigText text="Over" />
           </Gradient>
         </Box>
@@ -70,7 +70,7 @@ export const GameOver: React.FC = () => {
         <WinnerDisplay winner={winner} />
         <FinalScore scores={scores} gameMode={gameMode} />
 
-        <Box marginY={1} flexDirection="column" alignItems="center">
+        <Box flexDirection="column" alignItems="center">
           <Text color={COLORS.info}>
             Time: <Text bold>{formatTime(timeElapsed)}</Text>
           </Text>

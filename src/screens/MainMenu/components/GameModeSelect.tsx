@@ -10,7 +10,6 @@ interface GameModeSelectProps {
 export const GameModeSelect: React.FC<GameModeSelectProps> = ({ currentMode }) => {
   return (
     <Box marginY={1} marginTop={2}>
-      <Text>Game Mode: </Text>
       <Text color={currentMode === 'single' ? COLORS.p1 : COLORS.dim} bold>
         Single Player
       </Text>

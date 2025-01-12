@@ -29,7 +29,7 @@ export const WinnerDisplay: React.FC<WinnerDisplayProps> = ({ winner }) => {
       : "It's a Tie!"
 
   return (
-    <Box marginY={1}>
+    <Box marginTop={1}>
       <Text bold color={color}>
         {message}
       </Text>

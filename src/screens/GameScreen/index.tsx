@@ -58,8 +58,7 @@ export const GameScreen: React.FC = () => {
       dispatch({ type: 'SET_SELECTED_INDEX', payload: Math.max(0, state.selectedIndex - state.gridDimension.cols) })
     } else if (key.downArrow) {
       dispatch({ type: 'SET_SELECTED_INDEX', payload: Math.min(state.grid.length - 1, state.selectedIndex + state.gridDimension.cols) })
-    } else if (input === ' ' || input === 'enter') {
-      // console.log('Flipping card at index:', state.selectedIndex)
+    } else if (input === ' ' || input === 'enter') { 
       dispatch({ type: 'FLIP_CARD', payload: state.selectedIndex })
     }
   })

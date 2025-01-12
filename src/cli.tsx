@@ -77,15 +77,13 @@ const modeMap = {
   '2p': 'vs-player',
   ai: 'vs-ai',
 } as const
-
-// Parse grid size if provided
+ 
 const initialGrid =
   cli.flags.grid
     ?.match(/^(\d+)x(\d+)$/)
     ?.slice(1)
     .map(Number) || null
 
-console.log({ modeMap, initialGrid })
 render(
   <App
     initialMode={
