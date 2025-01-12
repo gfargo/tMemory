@@ -7,8 +7,9 @@ A terminal-based Memory/Concentration card game built with React Ink.
 ## Features
 
 - 🎮 Multiple game modes:
-  - Single player
-  - Player vs AI (🚧 in development)
+  - Single player (1P)
+  - Player vs Player (2P)
+  - Player vs AI
 - 📏 Flexible grid sizes:
   - Preset grids from 2x2 to 12x12
   - Custom grid dimensions up to 12x12
@@ -43,7 +44,7 @@ tmemory
 ## How to Play
 
 1. **Start Screen**:
-   - Press 'G' to switch game mode (Single Player/vs AI)
+   - Press 'G' to switch game mode (1P/2P/AI)
    - Press 'M' to switch between preset and custom grid modes
    - In preset mode:
      - Use ⬆️/⬇️ arrows to cycle through predefined grid sizes
@@ -56,7 +57,8 @@ tmemory
    - Use arrow keys to navigate the grid
    - Press Space to flip a card
    - Match pairs of cards to score points
-   - In vs AI mode, take turns with the AI opponent
+   - In 2P mode, players take turns
+   - In AI mode, take turns with the AI opponent
 
 3. **Game Over**:
    - View your completion time
