@@ -36,7 +36,7 @@ export const GameScreen: React.FC = () => {
     if (state.currentPlayer === 'ai' && state.flippedIndices.length === 0) {
       // Add a small delay before AI moves
       const timer = setTimeout(() => {
-        const [first, second] = findAIMove(state.grid, state.matchedIndices)
+        const [first, second] = findAIMove(state.grid, state.matchedIndices, state.flippedIndices)
         dispatch({ type: 'FLIP_CARD', payload: first })
         // Add delay between first and second card
         setTimeout(() => {

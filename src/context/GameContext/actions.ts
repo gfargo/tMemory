@@ -74,32 +74,71 @@ export const getNextPlayer = (
 
 export const findAIMove = (
   grid: GameCard[],
-  matchedIndices: number[]
+  matchedIndices: number[],
+  flippedIndices: number[] = []
 ): [number, number] => {
+  // Get all unmatched cards
   const unmatched = grid
     .map((card, index) => ({ card, index }))
     .filter(({ index }) => !matchedIndices.includes(index))
 
   if (unmatched.length < 2) return [0, 1]
 
-  // Check if AI remembers a pair
-  const knownPair = unmatched.find(({ card, index: idx }) =>
-    unmatched.some(
-      (other) => other.index !== idx && other.card.value === card.value
-    )
-  )
+  // Get cards that have been seen (previously flipped)
+  const seenCards = new Map<string, number>()
+  grid.forEach((card, index) => {
+    if (card.faceUp || flippedIndices.includes(index)) {
+      seenCards.set(card.value, index)
+    }
+  })
 
-  if (knownPair) {
-    const secondCard = unmatched.find(
-      ({ card, index }) =>
-        index !== knownPair.index && card.value === knownPair.card.value
+  // Check for a matching pair among seen cards
+  for (const [value, index] of seenCards.entries()) {
+    const matchingCard = unmatched.find(
+      ({ card, index: idx }) => 
+        idx !== index && 
+        !matchedIndices.includes(idx) && 
+        !flippedIndices.includes(idx) && 
+        card.value === value
     )
-    if (secondCard) {
-      return [knownPair.index, secondCard.index]
+
+    if (matchingCard) {
+      return [index, matchingCard.index]
     }
   }
 
-  // Random selection
+  // If no known pairs, try to flip a card we haven't seen yet
+  const unseenCards = unmatched.filter(
+    ({ card }) => !seenCards.has(card.value)
+  )
+
+  if (unseenCards.length > 0) {
+    // Pick one unseen card
+    const randomUnseenIndex = Math.floor(Math.random() * unseenCards.length)
+    const randomUnseen = unseenCards[randomUnseenIndex]
+    if (!randomUnseen) {
+      // Fallback to random selection if something went wrong
+      return [unmatched[0]?.index ?? 0, unmatched[1]?.index ?? 1]
+    }
+    
+    // And one random card from remaining unmatched cards
+    const otherCards = unmatched.filter(({ index }) => index !== randomUnseen.index)
+    if (otherCards.length === 0) {
+      // Fallback if no other cards available
+      return [randomUnseen.index, unmatched[0]?.index ?? 0]
+    }
+    
+    const randomOtherIndex = Math.floor(Math.random() * otherCards.length)
+    const randomOther = otherCards[randomOtherIndex]
+    if (!randomOther) {
+      // Fallback if random selection failed
+      return [randomUnseen.index, otherCards[0]?.index ?? 0]
+    }
+    
+    return [randomUnseen.index, randomOther.index]
+  }
+
+  // Fallback to random selection if all cards have been seen
   const shuffledIndices = unmatched
     .map(({ index }) => index)
     .sort(() => Math.random() - 0.5)

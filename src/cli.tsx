@@ -85,6 +85,7 @@ const initialGrid =
     ?.slice(1)
     .map(Number) || null
 
+console.log({ modeMap, initialGrid })
 render(
   <App
     initialMode={
@@ -98,4 +99,5 @@ render(
         : undefined
     }
   />
+  // <Card suit="hearts" value="5" faceUp variant='simple' />
 )
