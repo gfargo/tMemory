@@ -29,6 +29,9 @@ export interface HighScore {
   cols: number
   gameMode: GameMode
   date: string
+  playerName?: string
+  deviceId?: string
+  isOnline?: boolean
 }
 
 export type Winner = 'Player' | 'P1' | 'P2' | 'AI' | 'Nobody'
