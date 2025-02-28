@@ -1,6 +1,6 @@
 {
   "name": "tmemory",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A terminal-based Memory card game built with React Ink. Features multiple grid sizes, AI opponent, and high scores.",
   "author": "gfargo <ghfargo@gmail.com>",
   "license": "MIT",
