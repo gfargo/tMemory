@@ -5,6 +5,7 @@ import React from 'react'
 import { GameLayout } from '../../components/layout/GameLayout.js'
 import { COLORS } from '../../constants/colors.js'
 import { ALL_PRESET_GRIDS, isValidGrid } from '../../constants/gridPresets.js'
+
 import { useGame } from '../../context/GameContext/index.js'
 import { Controls } from './components/Controls.js'
 import { GameModeSelect } from './components/GameModeSelect.js'
@@ -20,6 +21,11 @@ export const MainMenu: React.FC = () => {
         type: 'SET_GRID_SELECTION_MODE',
         payload: state.gridSelectionMode === 'preset' ? 'custom' : 'preset',
       })
+      return
+    }
+
+    if (input.toLowerCase() === 'l') {
+      dispatch({ type: 'SET_GAME_STATE', payload: 'leaderboard' })
       return
     }
 

@@ -4,6 +4,7 @@ import { GameProvider, useGame } from './context/GameContext/index.js'
 import { HighScoreProvider } from './context/HighScoreContext/index.js'
 import { GameOver } from './screens/GameOver/index.js'
 import { GameScreen } from './screens/GameScreen/index.js'
+import LeaderboardScreen from './screens/Leaderboard/index.js'
 import { MainMenu } from './screens/MainMenu/index.js'
 
 const GameRouter: React.FC = () => {
@@ -16,6 +17,8 @@ const GameRouter: React.FC = () => {
       return <GameScreen />
     case 'gameover':
       return <GameOver />
+    case 'leaderboard':
+      return <LeaderboardScreen />
     default:
       return <MainMenu />
   }

@@ -45,11 +45,14 @@
     "dist"
   ],
   "dependencies": {
+    "cli-table3": "^0.6.5",
     "conf": "^13.1.0",
     "ink": "^5.1.0",
     "ink-big-text": "^2.0.0",
     "ink-gradient": "^3.0.0",
+    "ink-link": "^4.1.0",
     "ink-playing-cards": "^0.7.3",
+    "ink-text-input": "^6.0.0",
     "meow": "^11.0.0",
     "react": "^18.2.0"
   },

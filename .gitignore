@@ -3,6 +3,7 @@ dist
 node_modules/
 
 prompts/
+next-api/
 
 # General
 .DS_Store
