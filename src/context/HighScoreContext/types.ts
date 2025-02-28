@@ -9,9 +9,14 @@ export interface HighScoreContextValue {
   getPlayerName: () => string | undefined
   setPlayerName: (name: string) => void
   getDeviceId: () => string
+  
+  // TODO: Move this to a separate context
+  onlineEnabled:  boolean;
+  setOnlineEnabled: (enabled: boolean) => void;
 }
 
 export interface HighScoreConfig {
   scores: Record<string, HighScore[]>
+  onlineEnabled: boolean
   playerName?: string
 }

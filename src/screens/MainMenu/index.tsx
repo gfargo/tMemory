@@ -5,14 +5,15 @@ import React from 'react'
 import { GameLayout } from '../../components/layout/GameLayout.js'
 import { COLORS } from '../../constants/colors.js'
 import { ALL_PRESET_GRIDS, isValidGrid } from '../../constants/gridPresets.js'
-
 import { useGame } from '../../context/GameContext/index.js'
+import { useHighScores } from '../../context/HighScoreContext/index.js'
 import { Controls } from './components/Controls.js'
 import { GameModeSelect } from './components/GameModeSelect.js'
 import { GridSizeConfig } from './components/GridSizeConfig.js'
 import { HighScoreDisplay } from './components/HighScoreDisplay.js'
 
 export const MainMenu: React.FC = () => {
+  const { onlineEnabled, setOnlineEnabled } = useHighScores()
   const { state, dispatch } = useGame()
 
   useInput((input, key) => {
@@ -26,6 +27,11 @@ export const MainMenu: React.FC = () => {
 
     if (input.toLowerCase() === 'l') {
       dispatch({ type: 'SET_GAME_STATE', payload: 'leaderboard' })
+      return
+    }
+
+    if (input.toLowerCase() === 'o') {
+      setOnlineEnabled(!onlineEnabled)
       return
     }
 
@@ -120,7 +126,10 @@ export const MainMenu: React.FC = () => {
         selectionMode={gridSelectionMode}
       />
       <HighScoreDisplay gameMode={gameMode} gridDimension={gridDimension} />
-      <Controls gridSelectionMode={gridSelectionMode} />
+      <Controls
+        gridSelectionMode={gridSelectionMode}
+        onlineEnabled={onlineEnabled}
+      />
 
       <Box marginTop={1}>
         <Text color={COLORS.dim}>
