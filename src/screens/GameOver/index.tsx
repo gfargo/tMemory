@@ -2,6 +2,7 @@ import { Box, Text, useApp, useInput } from 'ink'
 import BigText from 'ink-big-text'
 import Gradient from 'ink-gradient'
 import React, { useState } from 'react'
+import { submitScore } from '../../api/scoreApi.js'
 import { GameLayout } from "../../components/layout/GameLayout.js"
 import { COLORS } from "../../constants/colors.js"
 import { useGame } from "../../context/GameContext/index.js"
@@ -12,6 +13,7 @@ import { Leaderboard } from "./components/Leaderboard.js"
 import { PlayerNameInput } from "./components/PlayerNameInput.js"
 import { WinnerDisplay } from "./components/WinnerDisplay.js"
 
+ 
 export const GameOver: React.FC = () => {
   const { exit } = useApp()
   const { state, dispatch } = useGame()
@@ -20,12 +22,14 @@ export const GameOver: React.FC = () => {
 
   useInput((input) => {
     if (nameSubmitted && input === 'n') {
-      dispatch({ type: 'SET_GAME_STATE', payload: 'welcome' })
+      dispatch({ type: 'SET_GAME_STATE', payload: 'welcome' });
     } else if (nameSubmitted && input === 'q') {
-      exit()
+      exit();
+    } else if (input.toLowerCase() === 'l') {
+      dispatch({ type: 'SET_GAME_STATE', payload: 'leaderboard' });
     }
   })
-  const { getHighScore, isNewHighScore, saveHighScore } = useHighScores()
+  const { getHighScore, isNewHighScore, saveHighScore, getDeviceId } = useHighScores()
 
   // Check high scores
   React.useEffect(() => {
@@ -41,20 +45,28 @@ export const GameOver: React.FC = () => {
   }, [])
 
   // Handle player name submission
-  const handleNameSubmit = (playerName: string) => {
-    const timeElapsed = endTime - startTime
-    
-    // Save the high score with the player name
-    saveHighScore({
+  const handleNameSubmit = async (playerName: string) => {
+    const timeElapsed = endTime - startTime;
+    const date = new Date().toISOString();
+    const scoreData = {
       time: timeElapsed,
       rows: gridDimension.rows,
       cols: gridDimension.cols,
       gameMode,
-      date: new Date().toISOString(),
+      date,
       playerName,
-    })
-    
-    setNameSubmitted(true)
+      deviceId: getDeviceId(),
+    };
+    // Save the high score locally
+    saveHighScore(scoreData);
+    // Submit the score remotely via API
+    try {
+      const response = await submitScore(scoreData);
+      console.log('Score submitted:', response.score);
+    } catch (error) {
+      console.error('Score submission error:', error);
+    }
+    setNameSubmitted(true);
   }
   const {
     endTime,
@@ -116,6 +128,8 @@ export const GameOver: React.FC = () => {
             gridDimension={gridDimension} 
           />
         )}
+          <Text color={COLORS.dim}>Press <Text color={COLORS.ai} bold>L</Text> to view leaderboard</Text>
+
 
         <Box flexDirection="column" alignItems="center" marginY={1}>
           <Text color={COLORS.dim}>

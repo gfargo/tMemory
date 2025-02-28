@@ -2,7 +2,7 @@ import type { TCardValue, TSuit } from 'ink-playing-cards'
 
 export type GameMode = 'single' | 'vs-player' | 'vs-ai'
 export type Player = 'p1' | 'p2' | 'ai'
-export type GameState = 'welcome' | 'playing' | 'gameover'
+export type GameState = 'welcome' | 'playing' | 'gameover' | 'leaderboard'
 export type GridSelectionMode = 'preset' | 'custom'
 
 export interface GridDimension {

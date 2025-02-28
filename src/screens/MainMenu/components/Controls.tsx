@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink'
 import React from 'react'
-import { COLORS } from "../../../constants/colors.js"
+import { COLORS } from '../../../constants/colors.js'
 
 interface ControlsProps {
   gridSelectionMode: 'preset' | 'custom'
@@ -16,9 +16,13 @@ export const Controls: React.FC<ControlsProps> = ({ gridSelectionMode }) => {
         <Text bold>G</Text> <Text dimColor>Change game mode</Text>
       </Text>
       <Text>
+        <Text bold>L</Text> <Text dimColor>View leaderboard</Text>
+      </Text>
+      <Text>
         <Text bold>M</Text>{' '}
         <Text dimColor>
-          Switch {gridSelectionMode === 'preset' ? 'to custom' : 'to preset'} mode
+          Switch {gridSelectionMode === 'preset' ? 'to custom' : 'to preset'}{' '}
+          mode
         </Text>
       </Text>
       {gridSelectionMode === 'preset' ? (
