@@ -78,6 +78,29 @@ test.serial('createStore (browser): persists values via localStorage', (t) => {
 })
 
 test.serial(
+  'createStore (browser): unset keys fall back to schema defaults',
+  (t) => {
+    const globalWithWindow = globalThis as unknown as { window?: unknown }
+    globalWithWindow.window = { localStorage: new MemoryStorage() }
+
+    try {
+      const store = createStore<TestSchema>({
+        projectName: 'tmemory-storage-test-browser-defaults',
+        schema: {
+          name: { type: 'string', default: 'Anonymous' },
+          scores: { type: 'object', default: {} },
+        },
+      })
+
+      t.is(store.get('name'), 'Anonymous')
+      t.deepEqual(store.get('scores'), {})
+    } finally {
+      delete globalWithWindow.window
+    }
+  }
+)
+
+test.serial(
   'createStore (browser): falls back gracefully when localStorage throws',
   (t) => {
     const globalWithWindow = globalThis as unknown as { window?: unknown }

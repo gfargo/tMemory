@@ -20,19 +20,27 @@ export type KeyValueStore<T extends Record<string, any>> = {
 class LocalStorageStore<T extends Record<string, any>>
   implements KeyValueStore<T>
 {
-  constructor(private readonly projectName: string) {}
+  constructor(
+    private readonly projectName: string,
+    private readonly schema?: Schema<T>
+  ) {}
 
   get<K extends keyof T>(key: K): T[K] | undefined {
     try {
       const raw = window.localStorage.getItem(this.namespacedKey(key))
-      const value: T[K] | undefined =
-        raw === null ? undefined : (JSON.parse(raw) as T[K])
+      if (raw === null) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- T[K] is structurally `any` here because T is bounded by Record<string, any>, not because the default is actually unchecked.
+        return this.defaultFor(key)
+      }
+
+      const value = JSON.parse(raw) as T[K]
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- T[K] is structurally `any` here because T is bounded by Record<string, any>, not because `value` is actually unchecked.
       return value
     } catch {
       // LocalStorage may be unavailable (e.g. disabled in browser privacy
       // settings) or the stored value may be corrupt JSON.
-      return undefined
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- T[K] is structurally `any` here because T is bounded by Record<string, any>, not because the default is actually unchecked.
+      return this.defaultFor(key)
     }
   }
 
@@ -49,6 +57,20 @@ class LocalStorageStore<T extends Record<string, any>>
 
   private namespacedKey(key: keyof T): string {
     return `${this.projectName}:${String(key)}`
+  }
+
+  /**
+   * Mirrors `conf`'s behavior of falling back to the schema's `default` for
+   * a key that hasn't been set yet, so Node and browser reads agree.
+   */
+  private defaultFor<K extends keyof T>(key: K): T[K] | undefined {
+    const valueSchema = this.schema?.[key]
+    if (!valueSchema || typeof valueSchema === 'boolean') {
+      return undefined
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- T[K] is structurally `any` here because T is bounded by Record<string, any>, not because the default is actually unchecked.
+    return valueSchema.default as T[K] | undefined
   }
 }
 
@@ -89,5 +111,5 @@ export const createStore = <T extends Record<string, any>>(options: {
   clearInvalidConfig?: boolean
 }): KeyValueStore<T> =>
   isBrowser()
-    ? new LocalStorageStore<T>(options.projectName)
+    ? new LocalStorageStore<T>(options.projectName, options.schema)
     : new ConfigStore<T>(options)
