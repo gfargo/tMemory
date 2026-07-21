@@ -1,4 +1,11 @@
-import Conf from 'conf'
+// `conf` is Node.js-only (backed by `node:fs`/`node:path`/`node:os`), so it
+// must never be statically imported here: a top-level `import Conf from
+// 'conf'` is evaluated by browser bundlers regardless of any runtime branch,
+// which pulls conf's `node:*` imports into the bundle and breaks it. Import
+// only the type here (erased at compile time) and load the runtime value via
+// a guarded dynamic `import('conf')` below, so a browser bundle never
+// references the module at all.
+import type Conf from 'conf'
 import React, { createContext, useContext } from 'react'
 import { GameMode, GridDimension, HighScore } from '../../types/game.js'
 import { getDeviceId } from '../../utils/device.js'
@@ -15,6 +22,15 @@ import { HighScoreConfig, HighScoreContextValue } from './types.js'
  */
 const isBrowser = (): boolean =>
   typeof window !== 'undefined' && window.localStorage !== undefined
+
+// Only ever loaded on the Node.js branch (guarded by `isBrowser()`), via a
+// dynamic import so the module specifier is never eagerly evaluated when
+// this file is loaded in a browser.
+let ConfClass: typeof Conf | undefined
+if (!isBrowser()) {
+  const confModule = await import('conf')
+  ConfClass = confModule.default
+}
 
 const STORAGE_KEY_PREFIX = 'tmemory'
 
@@ -77,7 +93,11 @@ const getConfig = (): ConfigStore => {
     return browserConfig
   }
 
-  nodeConfig ||= new Conf<HighScoreConfig>({
+  if (!ConfClass) {
+    throw new Error('conf failed to load in the Node.js environment')
+  }
+
+  nodeConfig ||= new ConfClass<HighScoreConfig>({
     projectName: 'tmemory',
     schema: {
       scores: {
