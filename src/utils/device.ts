@@ -1,18 +1,17 @@
-import Conf from 'conf'
+import type Conf from 'conf'
+import { isBrowser } from './environment.js'
 
 const DEVICE_ID_KEY = 'tmemory-device-id'
 
 /**
- * Detects whether we're running in a browser-like environment with a usable
- * `localStorage`, as opposed to Node.js where `conf` (backed by `node:fs`)
- * should be used instead.
- *
- * Implemented as a function (rather than a module-scope constant) so it can
- * be re-evaluated on every call, which keeps it testable and avoids caching
- * a stale result at import time.
+ * `conf`'s module body imports `node:fs`/`node:path`/`node:os` at the top
+ * level, so a static `import Conf from 'conf'` crashes in a browser bundle
+ * the moment this module is imported, even if `new Conf()` is deferred. A
+ * top-level `await import(...)`, guarded by `isBrowser()`, means `conf`
+ * (and its Node builtins) is never evaluated when running in a browser.
  */
-const isBrowser = (): boolean =>
-  typeof window !== 'undefined' && window.localStorage !== undefined
+const configModule = isBrowser() ? undefined : await import('conf')
+const ConfigCtor = configModule?.default
 
 /**
  * Generates a random device ID
@@ -29,11 +28,16 @@ let deviceConfig: Conf<DeviceConfigSchema> | undefined
 
 /**
  * Lazily initializes and returns the `conf` store used to persist the
- * device ID on Node.js. Only ever called from the Node branch so that a
- * browser bundle never needs to touch `node:fs` at instantiation time.
+ * device ID on Node.js. Only ever called from the Node branch, where
+ * `ConfigCtor` is always loaded — see the module-scope
+ * `await import('conf')` above.
  */
 const getConfig = (): Conf<DeviceConfigSchema> => {
-  deviceConfig ||= new Conf<DeviceConfigSchema>({
+  if (!ConfigCtor) {
+    throw new Error('conf is unavailable in this environment')
+  }
+
+  deviceConfig ||= new ConfigCtor<DeviceConfigSchema>({
     projectName: 'tmemory-device',
     schema: {
       deviceId: {

@@ -1,16 +1,16 @@
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- `Conf` must stay a value-position import so TypeScript elides it (it's only used in type positions here); `import type Conf, { type Schema }` is a syntax error (TS1363: a type-only import can't mix default and named bindings).
 import Conf, { type Schema } from 'conf'
+import { isBrowser } from './environment.js'
 
 /**
- * Detects whether we're running in a browser-like environment with a usable
- * `localStorage`, as opposed to Node.js where `conf` (backed by `node:fs`)
- * should be used instead.
- *
- * Implemented as a function (rather than a module-scope constant) so it can
- * be re-evaluated on every call, which keeps it testable and avoids caching
- * a stale result at import time.
+ * `conf`'s module body imports `node:fs`/`node:path`/`node:os` at the top
+ * level, so a static `import Conf from 'conf'` crashes in a browser bundle
+ * the moment this module is imported, even if `new Conf()` is deferred. A
+ * top-level `await import(...)`, guarded by `isBrowser()`, means `conf`
+ * (and its Node builtins) is never evaluated when running in a browser.
  */
-const isBrowser = (): boolean =>
-  typeof window !== 'undefined' && window.localStorage !== undefined
+const configModule = isBrowser() ? undefined : await import('conf')
+const ConfigCtor = configModule?.default
 
 export type KeyValueStore<T extends Record<string, any>> = {
   get<K extends keyof T>(key: K): T[K] | undefined
@@ -96,11 +96,18 @@ class ConfigStore<T extends Record<string, any>> implements KeyValueStore<T> {
   }
 
   /**
-   * Lazily initializes the underlying `conf` instance so `node:fs` is only
-   * touched when a get/set actually runs, not at import time.
+   * Lazily initializes the underlying `conf` instance so it's only
+   * constructed when a get/set actually runs, not at import time.
    */
   private getConf(): Conf<T> {
-    this.store ||= new Conf<T>(this.options)
+    if (!ConfigCtor) {
+      // `createStore` only ever constructs `ConfigStore` on the Node
+      // branch, where `ConfigCtor` is always loaded — see the module-scope
+      // `await import('conf')` above.
+      throw new Error('conf is unavailable in this environment')
+    }
+
+    this.store ||= new ConfigCtor<T>(this.options)
     return this.store
   }
 }
