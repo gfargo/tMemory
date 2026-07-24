@@ -27,10 +27,26 @@ const isBrowser = (): boolean =>
 // dynamic import so the module specifier is never eagerly evaluated when
 // this file is loaded in a browser.
 let ConfClass: typeof Conf | undefined
-if (!isBrowser()) {
+
+/**
+ * Loads `conf` if it hasn't been loaded yet and we're not in a browser.
+ * `isBrowser()` is re-checked on every call (rather than relying on a single
+ * snapshot taken at module-evaluation time), so this self-heals if the
+ * `window` global's presence differs between when this module first loaded
+ * and when the Node.js branch is actually reached.
+ */
+const ensureConfClassLoaded = async (): Promise<void> => {
+  if (ConfClass || isBrowser()) {
+    return
+  }
+
   const confModule = await import('conf')
   ConfClass = confModule.default
 }
+
+// Eagerly load in the common case (this module evaluating in Node.js), so
+// `ConfClass` is ready before any synchronous `getConfig()` call below.
+await ensureConfClassLoaded()
 
 const STORAGE_KEY_PREFIX = 'tmemory'
 
@@ -94,7 +110,13 @@ const getConfig = (): ConfigStore => {
   }
 
   if (!ConfClass) {
-    throw new Error('conf failed to load in the Node.js environment')
+    // `isBrowser()` was (incorrectly) `true` when this module first loaded,
+    // so the eager load above was skipped. Kick off a background load so a
+    // subsequent call succeeds, and surface a clear error for this one.
+    void ensureConfClassLoaded()
+    throw new Error(
+      'conf is still loading for the Node.js environment; retry the operation'
+    )
   }
 
   nodeConfig ||= new ConfClass<HighScoreConfig>({
