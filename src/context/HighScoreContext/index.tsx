@@ -113,7 +113,7 @@ const getConfig = (): ConfigStore => {
     // `isBrowser()` was (incorrectly) `true` when this module first loaded,
     // so the eager load above was skipped. Kick off a background load so a
     // subsequent call succeeds, and surface a clear error for this one.
-    void ensureConfClassLoaded()
+    void ensureConfClassLoaded().catch(() => {})
     throw new Error(
       'conf is still loading for the Node.js environment; retry the operation'
     )
