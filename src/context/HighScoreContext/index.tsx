@@ -1,50 +1,169 @@
-import Conf from 'conf'
+// `conf` is Node.js-only (backed by `node:fs`/`node:path`/`node:os`), so it
+// must never be statically imported here: a top-level `import Conf from
+// 'conf'` is evaluated by browser bundlers regardless of any runtime branch,
+// which pulls conf's `node:*` imports into the bundle and breaks it. Import
+// only the type here (erased at compile time) and load the runtime value via
+// a guarded dynamic `import('conf')` below, so a browser bundle never
+// references the module at all.
+import type Conf from 'conf'
 import React, { createContext, useContext } from 'react'
 import { GameMode, GridDimension, HighScore } from '../../types/game.js'
 import { getDeviceId } from '../../utils/device.js'
 import { HighScoreConfig, HighScoreContextValue } from './types.js'
 
-// Initialize Conf with schema validation
-const config = new Conf<HighScoreConfig>({
-  projectName: 'tmemory',
-  schema: {
-    scores: {
-      type: 'object',
-      additionalProperties: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            time: { type: 'number', minimum: 0 },
-            rows: { type: 'number', minimum: 1, maximum: 12 },
-            cols: { type: 'number', minimum: 1, maximum: 12 },
-            gameMode: {
-              type: 'string',
-              enum: ['single', 'vs-ai', 'vs-player'],
+/**
+ * Detects whether we're running in a browser-like environment with a usable
+ * `localStorage`, as opposed to Node.js where `conf` (backed by `node:fs`)
+ * should be used instead.
+ *
+ * Implemented as a function (rather than a module-scope constant) so it can
+ * be re-evaluated on every call, which keeps it testable and avoids caching
+ * a stale result at import time.
+ */
+const isBrowser = (): boolean =>
+  typeof window !== 'undefined' && window.localStorage !== undefined
+
+// Only ever loaded on the Node.js branch (guarded by `isBrowser()`), via a
+// dynamic import so the module specifier is never eagerly evaluated when
+// this file is loaded in a browser.
+let ConfClass: typeof Conf | undefined
+
+/**
+ * Loads `conf` if it hasn't been loaded yet and we're not in a browser.
+ * `isBrowser()` is re-checked on every call (rather than relying on a single
+ * snapshot taken at module-evaluation time), so this self-heals if the
+ * `window` global's presence differs between when this module first loaded
+ * and when the Node.js branch is actually reached.
+ */
+const ensureConfClassLoaded = async (): Promise<void> => {
+  if (ConfClass || isBrowser()) {
+    return
+  }
+
+  const confModule = await import('conf')
+  ConfClass = confModule.default
+}
+
+// Eagerly load in the common case (this module evaluating in Node.js), so
+// `ConfClass` is ready before any synchronous `getConfig()` call below.
+await ensureConfClassLoaded()
+
+const STORAGE_KEY_PREFIX = 'tmemory'
+
+const configDefaults: HighScoreConfig = {
+  scores: {},
+  playerName: '',
+  onlineEnabled: false,
+}
+
+type ConfigStore = {
+  get<K extends keyof HighScoreConfig>(key: K): HighScoreConfig[K]
+  set<K extends keyof HighScoreConfig>(key: K, value: HighScoreConfig[K]): void
+}
+
+/**
+ * `localStorage`-backed implementation of `ConfigStore`, used in the browser
+ * where `conf`'s `node:fs`-based persistence isn't available. Each config key
+ * is stored under its own namespaced `localStorage` entry.
+ */
+class BrowserConfigStore implements ConfigStore {
+  get<K extends keyof HighScoreConfig>(key: K): HighScoreConfig[K] {
+    try {
+      const raw = window.localStorage.getItem(`${STORAGE_KEY_PREFIX}:${key}`)
+      return raw === null
+        ? configDefaults[key]
+        : (JSON.parse(raw) as HighScoreConfig[K])
+    } catch {
+      return configDefaults[key]
+    }
+  }
+
+  set<K extends keyof HighScoreConfig>(
+    key: K,
+    value: HighScoreConfig[K]
+  ): void {
+    try {
+      window.localStorage.setItem(
+        `${STORAGE_KEY_PREFIX}:${key}`,
+        JSON.stringify(value)
+      )
+    } catch {
+      // LocalStorage may be unavailable (e.g. disabled in browser privacy
+      // settings) or full. Silently skip persistence in that case.
+    }
+  }
+}
+
+let browserConfig: BrowserConfigStore | undefined
+let nodeConfig: Conf<HighScoreConfig> | undefined
+
+/**
+ * Lazily initializes and returns the config store used to persist high
+ * scores, player name, and the online-leaderboard flag. Only ever
+ * instantiates `conf` from the Node branch so that a browser bundle never
+ * needs to touch `node:fs` at instantiation time.
+ */
+const getConfig = (): ConfigStore => {
+  if (isBrowser()) {
+    browserConfig ||= new BrowserConfigStore()
+    return browserConfig
+  }
+
+  if (!ConfClass) {
+    // `isBrowser()` was (incorrectly) `true` when this module first loaded,
+    // so the eager load above was skipped. Kick off a background load so a
+    // subsequent call succeeds, and surface a clear error for this one.
+    void ensureConfClassLoaded().catch((error: unknown) => {
+      console.error('Background load of the "conf" module failed:', error)
+    })
+    throw new Error(
+      'conf is still loading for the Node.js environment; retry the operation'
+    )
+  }
+
+  nodeConfig ||= new ConfClass<HighScoreConfig>({
+    projectName: 'tmemory',
+    schema: {
+      scores: {
+        type: 'object',
+        additionalProperties: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              time: { type: 'number', minimum: 0 },
+              rows: { type: 'number', minimum: 1, maximum: 12 },
+              cols: { type: 'number', minimum: 1, maximum: 12 },
+              gameMode: {
+                type: 'string',
+                enum: ['single', 'vs-ai', 'vs-player'],
+              },
+              date: { type: 'string', format: 'date-time' },
+              playerName: { type: 'string', maxLength: 12 },
+              deviceId: { type: 'string' },
+              isOnline: { type: 'boolean' },
             },
-            date: { type: 'string', format: 'date-time' },
-            playerName: { type: 'string', maxLength: 12 },
-            deviceId: { type: 'string' },
-            isOnline: { type: 'boolean' },
+            required: ['time', 'rows', 'cols', 'gameMode', 'date'],
+            additionalProperties: false,
           },
-          required: ['time', 'rows', 'cols', 'gameMode', 'date'],
-          additionalProperties: false,
+          default: [],
         },
-        default: [],
+        default: {},
       },
-      default: {},
+      playerName: {
+        type: 'string',
+        default: '',
+      },
+      onlineEnabled: {
+        type: 'boolean',
+        default: false,
+      },
     },
-    playerName: {
-      type: 'string',
-      default: '',
-    },
-    onlineEnabled: {
-      type: 'boolean',
-      default: false,
-    },
-  },
-  clearInvalidConfig: true, // This will clear any invalid config data
-})
+    clearInvalidConfig: true, // This will clear any invalid config data
+  })
+
+  return nodeConfig
+}
 
 const getHighScoreKey = (grid: GridDimension, mode: GameMode): string => {
   return `${grid.rows}x${grid.cols}-${mode}`
@@ -58,11 +177,11 @@ export const HighScoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [onlineEnabled, setOnlineEnabled] = React.useState<boolean>(
-    config.get('onlineEnabled') || false
+    getConfig().get('onlineEnabled') || false
   )
 
   const getAllHighScores = (): Record<string, HighScore[]> => {
-    const scores = config.get('scores') as unknown as Record<
+    const scores = getConfig().get('scores') as unknown as Record<
       string,
       HighScore | HighScore[]
     >
@@ -128,7 +247,7 @@ export const HighScoreProvider: React.FC<{ children: React.ReactNode }> = ({
     // Sort by time (ascending) and keep only top 10
     scores[key] = scores[key].sort((a, b) => a.time - b.time).slice(0, 10)
 
-    config.set('scores', scores)
+    getConfig().set('scores', scores)
   }
 
   const isNewHighScore = (
@@ -163,12 +282,12 @@ export const HighScoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Get the player's name
   const getPlayerName = (): string | undefined => {
-    return config.get('playerName') as string
+    return getConfig().get('playerName') as string
   }
 
   // Set the player's name
   const setPlayerName = (name: string): void => {
-    config.set('playerName', name)
+    getConfig().set('playerName', name)
   }
 
   const value: HighScoreContextValue = {
@@ -180,7 +299,7 @@ export const HighScoreProvider: React.FC<{ children: React.ReactNode }> = ({
     onlineEnabled,
     setOnlineEnabled: (enabled: boolean): void => {
       // Update the config value and the local state
-      config.set('onlineEnabled', enabled)
+      getConfig().set('onlineEnabled', enabled)
       setOnlineEnabled(enabled)
     },
 
