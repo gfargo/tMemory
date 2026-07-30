@@ -1,17 +1,10 @@
 import type Conf from 'conf'
 import { isBrowser } from './environment.js'
+import { loadConfigCtor } from './conf-loader.js'
 
 const DEVICE_ID_KEY = 'tmemory-device-id'
 
-/**
- * `conf`'s module body imports `node:fs`/`node:path`/`node:os` at the top
- * level, so a static `import Conf from 'conf'` crashes in a browser bundle
- * the moment this module is imported, even if `new Conf()` is deferred. A
- * top-level `await import(...)`, guarded by `isBrowser()`, means `conf`
- * (and its Node builtins) is never evaluated when running in a browser.
- */
-const configModule = isBrowser() ? undefined : await import('conf')
-const ConfigCtor = configModule?.default
+const ConfigCtor = await loadConfigCtor()
 
 /**
  * Generates a random device ID
@@ -30,7 +23,7 @@ let deviceConfig: Conf<DeviceConfigSchema> | undefined
  * Lazily initializes and returns the `conf` store used to persist the
  * device ID on Node.js. Only ever called from the Node branch, where
  * `ConfigCtor` is always loaded — see the module-scope
- * `await import('conf')` above.
+ * `loadConfigCtor()` call above.
  */
 const getConfig = (): Conf<DeviceConfigSchema> => {
   if (!ConfigCtor) {

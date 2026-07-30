@@ -1,16 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- `Conf` must stay a value-position import so TypeScript elides it (it's only used in type positions here); `import type Conf, { type Schema }` is a syntax error (TS1363: a type-only import can't mix default and named bindings).
-import Conf, { type Schema } from 'conf'
+// `Schema` must be imported separately from `Conf`: `import type Conf, { type Schema }` (a single type-only import mixing a default and named binding) is a TS1363 syntax error.
+// eslint-disable-next-line import/no-duplicates
+import type Conf from 'conf'
+// eslint-disable-next-line import/no-duplicates
+import type { Schema } from 'conf'
 import { isBrowser } from './environment.js'
+import { loadConfigCtor } from './conf-loader.js'
 
-/**
- * `conf`'s module body imports `node:fs`/`node:path`/`node:os` at the top
- * level, so a static `import Conf from 'conf'` crashes in a browser bundle
- * the moment this module is imported, even if `new Conf()` is deferred. A
- * top-level `await import(...)`, guarded by `isBrowser()`, means `conf`
- * (and its Node builtins) is never evaluated when running in a browser.
- */
-const configModule = isBrowser() ? undefined : await import('conf')
-const ConfigCtor = configModule?.default
+const ConfigCtor = await loadConfigCtor()
 
 export type KeyValueStore<T extends Record<string, any>> = {
   get<K extends keyof T>(key: K): T[K] | undefined
@@ -103,7 +99,7 @@ class ConfigStore<T extends Record<string, any>> implements KeyValueStore<T> {
     if (!ConfigCtor) {
       // `createStore` only ever constructs `ConfigStore` on the Node
       // branch, where `ConfigCtor` is always loaded — see the module-scope
-      // `await import('conf')` above.
+      // `loadConfigCtor()` call above.
       throw new Error('conf is unavailable in this environment')
     }
 
