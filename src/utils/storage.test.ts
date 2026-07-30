@@ -1,6 +1,7 @@
 import test from 'ava'
 import Conf from 'conf'
 import { createStore } from './storage.js'
+import type * as StorageModule from './storage.js'
 
 /**
  * `storage.ts` branches on `typeof window !== 'undefined'` to decide between
@@ -97,6 +98,52 @@ test.serial(
     } finally {
       delete globalWithWindow.window
     }
+  }
+)
+
+test.serial(
+  'createStore (Node): self-heals when isBrowser() was true at module load and later becomes false',
+  async (t) => {
+    // Force this module's own top-level `await loadConfigCtor()` to skip
+    // loading `conf`, mirroring a module that first evaluates while
+    // `isBrowser()` incorrectly reports `true`. A cache-busting query gets a
+    // fresh module instance so this doesn't disturb the real, already-loaded
+    // `ConfigCtor` used by the other tests in this file.
+    const globalWithWindow = globalThis as unknown as { window?: unknown }
+    globalWithWindow.window = { localStorage: new MemoryStorage() }
+
+    let freshStorage: typeof StorageModule
+    try {
+      freshStorage = (await import(
+        `./storage.js?self-heal-test=${t.title}`
+      )) as typeof StorageModule
+    } finally {
+      delete globalWithWindow.window
+    }
+
+    new Conf({ projectName: 'tmemory-storage-test-selfheal' }).clear()
+
+    const store = freshStorage.createStore<TestSchema>({
+      projectName: 'tmemory-storage-test-selfheal',
+      schema: {
+        name: { type: 'string', default: '' },
+        scores: { type: 'object', default: {} },
+      },
+    })
+
+    t.throws(() => store.get('name'), {
+      message: /conf is still loading/,
+    })
+
+    // Let the background `import('conf')` kicked off by the failed attempt
+    // above resolve.
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+
+    t.is(store.get('name'), '')
+    store.set('name', 'Grace')
+    t.is(store.get('name'), 'Grace')
   }
 )
 

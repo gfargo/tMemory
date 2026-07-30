@@ -6,7 +6,7 @@ import type { Schema } from 'conf'
 import { isBrowser } from './environment.js'
 import { loadConfigCtor } from './conf-loader.js'
 
-const ConfigCtor = await loadConfigCtor()
+let ConfigCtor = await loadConfigCtor()
 
 export type KeyValueStore<T extends Record<string, any>> = {
   get<K extends keyof T>(key: K): T[K] | undefined
@@ -97,10 +97,23 @@ class ConfigStore<T extends Record<string, any>> implements KeyValueStore<T> {
    */
   private getConf(): Conf<T> {
     if (!ConfigCtor) {
-      // `createStore` only ever constructs `ConfigStore` on the Node
-      // branch, where `ConfigCtor` is always loaded — see the module-scope
-      // `loadConfigCtor()` call above.
-      throw new Error('conf is unavailable in this environment')
+      if (!isBrowser()) {
+        // `isBrowser()` was (incorrectly) `true` when this module first
+        // loaded, so the module-scope `loadConfigCtor()` call above skipped
+        // loading `conf`. Retry now that we're on the Node branch, so a
+        // later call succeeds instead of failing forever.
+        void (async () => {
+          try {
+            ConfigCtor = await loadConfigCtor(false)
+          } catch (error: unknown) {
+            console.error('Background load of the "conf" module failed:', error)
+          }
+        })()
+      }
+
+      throw new Error(
+        'conf is still loading for the Node.js environment; retry the operation'
+      )
     }
 
     this.store ||= new ConfigCtor<T>(this.options)

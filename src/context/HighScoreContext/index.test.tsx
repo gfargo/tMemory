@@ -87,6 +87,10 @@ test.serial(
       )
 
       t.truthy(capturedValue)
+
+      capturedValue!.setPlayerName('Ada')
+      t.is(capturedValue!.getPlayerName(), 'Ada')
+
       capturedValue!.saveHighScore({
         time: 42,
         rows: 2,
