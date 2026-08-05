@@ -31,3 +31,39 @@ export const loadConfigCtor = async (
   const configModule = await importConfig()
   return configModule.default
 }
+
+/**
+ * Wraps the result of `loadConfigCtor()` in a getter that self-heals when
+ * `isBrowser()` was (incorrectly) `true` at module load: rather than failing
+ * forever, it kicks off a background retry on the Node branch so a later
+ * call succeeds once `conf` has finished loading.
+ *
+ * Shared by storage.ts and device.ts so both `conf` consumers recover from
+ * the same isBrowser()-misdetection scenario, instead of only one of them
+ * self-healing.
+ */
+export const createConfigCtorGetter = (
+  initial: ConfigConstructor | undefined
+): (() => ConfigConstructor) => {
+  let ctor = initial
+
+  return (): ConfigConstructor => {
+    if (!ctor) {
+      if (!isBrowser()) {
+        void (async () => {
+          try {
+            ctor = await loadConfigCtor(false)
+          } catch (error: unknown) {
+            console.error('Background load of the "conf" module failed:', error)
+          }
+        })()
+      }
+
+      throw new Error(
+        'conf is still loading for the Node.js environment; retry the operation'
+      )
+    }
+
+    return ctor
+  }
+}

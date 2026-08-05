@@ -1,10 +1,10 @@
 import type Conf from 'conf'
 import { isBrowser } from './environment.js'
-import { loadConfigCtor } from './conf-loader.js'
+import { loadConfigCtor, createConfigCtorGetter } from './conf-loader.js'
 
 const DEVICE_ID_KEY = 'tmemory-device-id'
 
-const ConfigCtor = await loadConfigCtor()
+const getConfigCtor = createConfigCtorGetter(await loadConfigCtor())
 
 /**
  * Generates a random device ID
@@ -21,16 +21,10 @@ let deviceConfig: Conf<DeviceConfigSchema> | undefined
 
 /**
  * Lazily initializes and returns the `conf` store used to persist the
- * device ID on Node.js. Only ever called from the Node branch, where
- * `ConfigCtor` is always loaded — see the module-scope
- * `loadConfigCtor()` call above.
+ * device ID on Node.js. Only ever called from the Node branch.
  */
 const getConfig = (): Conf<DeviceConfigSchema> => {
-  if (!ConfigCtor) {
-    throw new Error('conf is unavailable in this environment')
-  }
-
-  deviceConfig ||= new ConfigCtor<DeviceConfigSchema>({
+  deviceConfig ||= new (getConfigCtor())<DeviceConfigSchema>({
     projectName: 'tmemory-device',
     schema: {
       deviceId: {
