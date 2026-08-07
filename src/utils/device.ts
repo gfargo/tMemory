@@ -1,18 +1,10 @@
-import Conf from 'conf'
+import type Conf from 'conf'
+import { isBrowser } from './environment.js'
+import { loadConfigCtor, createConfigCtorGetter } from './conf-loader.js'
 
 const DEVICE_ID_KEY = 'tmemory-device-id'
 
-/**
- * Detects whether we're running in a browser-like environment with a usable
- * `localStorage`, as opposed to Node.js where `conf` (backed by `node:fs`)
- * should be used instead.
- *
- * Implemented as a function (rather than a module-scope constant) so it can
- * be re-evaluated on every call, which keeps it testable and avoids caching
- * a stale result at import time.
- */
-const isBrowser = (): boolean =>
-  typeof window !== 'undefined' && window.localStorage !== undefined
+const getConfigCtor = createConfigCtorGetter(await loadConfigCtor())
 
 /**
  * Generates a random device ID
@@ -29,11 +21,10 @@ let deviceConfig: Conf<DeviceConfigSchema> | undefined
 
 /**
  * Lazily initializes and returns the `conf` store used to persist the
- * device ID on Node.js. Only ever called from the Node branch so that a
- * browser bundle never needs to touch `node:fs` at instantiation time.
+ * device ID on Node.js. Only ever called from the Node branch.
  */
 const getConfig = (): Conf<DeviceConfigSchema> => {
-  deviceConfig ||= new Conf<DeviceConfigSchema>({
+  deviceConfig ||= new (getConfigCtor())<DeviceConfigSchema>({
     projectName: 'tmemory-device',
     schema: {
       deviceId: {

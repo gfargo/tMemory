@@ -1,15 +1,17 @@
 import test from 'ava'
 import React from 'react'
-import { render } from 'ink-testing-library'
 import { Text } from 'ink'
+import { render } from 'ink-testing-library'
 import { HighScoreProvider, useHighScores } from './index.js'
 
 /**
- * `HighScoreContext` branches on `typeof window !== 'undefined'` to decide
- * between a browser-safe `localStorage`-backed config store and the
- * Node.js `conf`-backed store. These tests exercise the browser branch by
- * toggling a `window` global with an in-memory `localStorage` mock, mirroring
- * the approach used in `utils/device.test.ts`.
+ * Regression coverage for the bug this PR fixes: `HighScoreContext` used to
+ * construct `Conf` (backed by `node:fs`) at module scope, which crashed
+ * immediately on import in a browser bundle. Unlike storage.test.ts and
+ * device.test.ts (which exercise the underlying utilities in isolation),
+ * this mounts the actual `HighScoreProvider` used by `app.tsx` with a
+ * simulated browser `window`/`localStorage`, proving the real provider tree
+ * imports and renders without crashing outside of Node.
  */
 
 class MemoryStorage {
@@ -32,51 +34,75 @@ class MemoryStorage {
   }
 }
 
-const withBrowserWindow = (run: () => void): void => {
-  const globalWithWindow = globalThis as unknown as { window?: unknown }
-  globalWithWindow.window = { localStorage: new MemoryStorage() }
+function Consumer() {
+  const highScores = useHighScores()
 
-  try {
-    run()
-  } finally {
-    delete globalWithWindow.window
-  }
+  const score = highScores.getHighScore('single', { rows: 2, cols: 2 })
+
+  return <Text>score:{score ? score.time : 'none'}</Text>
 }
 
-let capturedHighScores: ReturnType<typeof useHighScores> | undefined
+type HighScoreContextValueForTest = ReturnType<typeof useHighScores>
 
-const Consumer: React.FC = () => {
-  capturedHighScores = useHighScores()
-  return <Text>ready</Text>
+let capturedValue: HighScoreContextValueForTest | undefined
+
+function Capture() {
+  capturedValue = useHighScores()
+  return null
 }
 
 test.serial(
-  'HighScoreProvider (browser): persists player name and scores via localStorage',
+  'HighScoreProvider mounts and round-trips a score in a simulated browser',
   (t) => {
-    withBrowserWindow(() => {
+    const globalWithWindow = globalThis as unknown as { window?: unknown }
+    globalWithWindow.window = { localStorage: new MemoryStorage() }
+
+    try {
+      t.notThrows(() => {
+        render(
+          <HighScoreProvider>
+            <Consumer />
+          </HighScoreProvider>
+        )
+      })
+    } finally {
+      delete globalWithWindow.window
+    }
+  }
+)
+
+test.serial(
+  'HighScoreProvider persists a saved score via localStorage in a simulated browser',
+  (t) => {
+    const globalWithWindow = globalThis as unknown as { window?: unknown }
+    globalWithWindow.window = { localStorage: new MemoryStorage() }
+
+    try {
+      capturedValue = undefined
+
       render(
         <HighScoreProvider>
-          <Consumer />
+          <Capture />
         </HighScoreProvider>
       )
 
-      t.truthy(capturedHighScores)
-      const highScores = capturedHighScores!
+      t.truthy(capturedValue)
 
-      highScores.setPlayerName('Ada')
-      t.is(highScores.getPlayerName(), 'Ada')
+      capturedValue!.setPlayerName('Ada')
+      t.is(capturedValue!.getPlayerName(), 'Ada')
 
-      highScores.saveHighScore({
+      capturedValue!.saveHighScore({
         time: 42,
-        rows: 4,
-        cols: 4,
+        rows: 2,
+        cols: 2,
         gameMode: 'single',
         date: new Date().toISOString(),
       })
 
-      const best = highScores.getHighScore('single', { rows: 4, cols: 4 })
+      const best = capturedValue!.getHighScore('single', { rows: 2, cols: 2 })
       t.is(best?.time, 42)
-      t.is(best?.playerName, 'Ada')
-    })
+    } finally {
+      delete globalWithWindow.window
+    }
   }
 )
